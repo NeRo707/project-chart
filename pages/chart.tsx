@@ -1,75 +1,80 @@
 import React, { useState, useEffect } from "react";
-import { Chart } from "react-google-charts";
+import dynamic from "next/dynamic";
 import Navbar from "./components/Navbar";
+import useUserStore from "@/store/useStore";
+import { GetServerSideProps } from "next";
 import axios from "axios";
+import { IUser } from "@/store/types/IUser";
 
-export const options = {
-  title: "Users",
-};
+const Pie = dynamic(() => import("@ant-design/plots").then(({ Pie }) => Pie), {
+  ssr: false,
+});
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  gender: string;
-  address: {
-    street: string;
-    city: string;
-  };
-  phone: string;
-}
-
-const Chartz = () => {
-  const [data, setData] = useState<Array<Array<string | number>>>([]);
+const chart = ({ initialData }: { initialData: IUser[] }) => {
+  const { Users, setUsers } = useUserStore();
 
   useEffect(() => {
-    getUsers();
-  }, []);
+    setUsers(initialData);
+  }, [Users]);
 
-  const fetchData = async () => {
-    try {
-      const response = await axios.get("http://localhost:3000/api/users");
-      setDataSource(response.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
 
-  const getUsers = async () => {
-    try {
-      const response = await axios.get<User[]>("http://localhost:3000/api/users");
-      const users = response.data;
+  const cities = Users.map((user:any) => user.address.city);
 
-      // Count users by country
-      const userCountByCountry = users.reduce((count:any, user:any) => {
-        const country:any = user.address.city;
-        count[country] = (count[country] || 0) + 1;
-        return count;
-      }, {});
+  const cityData = cities.reduce((acc: any, city: any) => {
+    acc[city] = (acc[city] || 0) + 1;
+    return acc;
+  }, {});
 
-      // Format the data for the chart
-      const chartData: any = Object.entries(userCountByCountry).map(
-        ([country, count]) => [country, count]
-      );
+  const data = Object.entries(cityData).map(([city, count]) => ({
+    city,
+    count,
+  }));
 
-      setData([["Country", "Count"], ...chartData]);
-    } catch (err) {
-      console.log(err);
-    }
+  const config = {
+    appendPadding: 10,
+    data,
+    angleField: "count",
+    colorField: "city",
+    radius: 0.8,
+    label: {
+      type: "outer",
+      content: "{name} {percentage}",
+    },
+    interactions: [
+      {
+        type: "pie-legend-active",
+      },
+      {
+        type: "element-active",
+      },
+    ],
   };
 
   return (
     <>
       <Navbar />
-      <Chart
-        chartType="PieChart"
-        data={data}
-        options={options}
-        width={"100%"}
-        height={"400px"}
-      />
+      <Pie {...config} />;
     </>
   );
 };
 
-export default Chartz;
+export const getServerSideProps: GetServerSideProps = async () => {
+  try {
+    const response = await axios.get("http://localhost:3000/api/users");
+
+    return {
+      props: {
+        initialData: response.data,
+      },
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      props: {
+        initialData: [],
+      },
+    };
+  }
+};
+
+export default chart;

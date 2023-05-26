@@ -1,24 +1,23 @@
 import { Button, FloatButton, Form, Input, Modal, Select } from "antd";
 import axios from "axios";
 import React, { useState } from "react";
-
-const Fab = ({fetchData}: {fetchData: () => void}) => {
+import Router from "next/router";
+const Fab = () => {
   const [formOpen, setFormOpen] = useState(false);
   
-  const [userAdded, setUserAdded] = useState(false);
+  const router = Router;
 
 const addUser = async (user: any) => {
   try {
     await axios.post("/api/adduser", user).then((res) => {
       console.log(res);
-      setUserAdded(true); // Set userAdded state to true
-      fetchData(); // Fetch data again after successful addition
+      router.push(router.asPath);
     });
   } catch (err) {
     console.log(err);
   }
   
-  setFormOpen(false); // Close the form after adding the user
+  setFormOpen(false);
 };
 
   return (

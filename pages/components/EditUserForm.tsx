@@ -1,24 +1,13 @@
+import { IUser } from "@/store/types/IUser";
 import { Button, Dropdown, Form, Input, List, Select } from "antd";
 import axios from "axios";
 import React, { useEffect } from "react";
-
-interface User {
-  id: string | number;
-  name: string;
-  email: string;
-  gender: string;
-  address: {
-    street: string;
-    city: string;
-  };
-  phone: string;
-}
 
 const EditUserForm = ({
   record,
   onCancel,
 }: {
-  record: User | null;
+  record: IUser | null;
   onCancel: () => void;
 }) => {
   const [form] = Form.useForm();
@@ -29,7 +18,7 @@ const EditUserForm = ({
     }
   }, [record, form]);
 
-  const handleSave = (id: any) => {
+  const handleEdit = (id: any) => {
     form.validateFields().then((values) => {
       // Handle form submission
       console.log("Edited values:", values);
@@ -50,8 +39,9 @@ const EditUserForm = ({
     <Form
       form={form}
       onSubmitCapture={() => {
-        handleSave(record?.id);
+        handleEdit(record?.id);
       }}
+      layout="vertical"
     >
       <Form.Item
         label="Name"
@@ -83,7 +73,7 @@ const EditUserForm = ({
       <Form.Item label="City" name="city" initialValue={record?.address.city}>
         <Input />
       </Form.Item>
-      <Form.Item label="Phone" name="phone">
+      <Form.Item label="Phone" name="phone" initialValue={record?.phone}>
         <Input />
       </Form.Item>
       <Form.Item>
